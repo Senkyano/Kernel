@@ -1,22 +1,51 @@
 NAME := kernel-builder
+PWD  := $(shell pwd)
 
-all: docker docker-up
+.PHONY: all docker build-c build-rs launch-c-simple launch-c launch-rs-simple launch-rs clean fclean
+
+all: docker build-c build-rs
 
 docker:
 	docker build -t $(NAME) .
 
-docker-up:
+# ── Compilation ───────────────────────────────────────────────────
+build-c:
 	docker run --rm \
-	-v "$(PWD)/srcs:/kernel/srcs" \
-	-v "$(PWD)/output:/kernel/output" \
-	-v "$(PWD)/linker.ld:/kernel/linker.ld" \
-	kernel-builder
+		-e LANG=c \
+		-v "$(PWD)/srcs:/kernel/srcs" \
+		-v "$(PWD)/output:/kernel/output" \
+		$(NAME)
 
-launch-simple:
-	qemu-system-i386 -kernel output/kernel.elf
+build-rs:
+	docker run --rm \
+		-e LANG=rs \
+		-v "$(PWD)/srcs:/kernel/srcs" \
+		-v "$(PWD)/output:/kernel/output" \
+		$(NAME)
 
-launch-qemu:
-	qemu-system-i386 -cdrom output/kernel.iso -boot d
+# ── Lancement QEMU ────────────────────────────────────────────────
+launch-c-simple:
+	qemu-system-i386 -kernel output/c/kernel.elf
 
+launch-c:
+	qemu-system-i386 -cdrom output/c/kernel.iso -boot d
+
+launch-rs-simple:
+	qemu-system-i386 -kernel output/rust/kernel.elf
+
+launch-rs:
+	qemu-system-i386 -cdrom output/rust/kernel.iso -boot d
+
+size-c:
+	ls -lh output/c/kernel.iso
+	stat output/c/kernel.iso
+
+# ── Nettoyage ─────────────────────────────────────────────────────
 clean:
+	docker run --rm \
+		-v "$(PWD)/srcs:/kernel/srcs" \
+		-v "$(PWD)/output:/kernel/output" \
+		$(NAME) sh -c "make -C srcs fclean"
+
+fclean: clean
 	docker rmi $(NAME)

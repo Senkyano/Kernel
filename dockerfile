@@ -3,24 +3,29 @@ FROM debian:bookworm-slim
 LABEL description="Cross-Compilation for KernelFromScratch"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	nasm \
-	gcc \
-	gcc-multilib \
-	binutils \
-	make \
-	grub-pc-bin \
-	grub-common \
-	xorriso \
-	mtools \
-	&& rm -fr /var/lib/apt/lists/*
+    nasm \
+    gcc \
+    gcc-multilib \
+    binutils \
+    make \
+    grub-pc-bin \
+    grub-common \
+    xorriso \
+    mtools \
+    curl \
+	ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
+# Rustup en nightly (nécessaire pour no_std bare-metal)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+    | sh -s -- -y --default-toolchain nightly \
+    && /root/.cargo/bin/rustup component add rust-src llvm-tools-preview
 ENV PATH="/root/.cargo/bin:${PATH}"
-
-RUN rustup target add i686-unknown-linux-gnu
-RUN rustup component add rust-src
 
 WORKDIR /kernel
 COPY . .
 
-CMD [ "make" "-C" "srcs" ]
+# LANG peut être surchargé au docker run : -e LANG=rs
+ENV LANG=c
+
+CMD ["sh", "-c", "make -C srcs LANG=${LANG}"]
