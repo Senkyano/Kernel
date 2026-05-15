@@ -9,8 +9,7 @@ path		= "srcs/kernel.rs"
 crate-type	= ["staticlib"]
 
 [profile.release]
-panic     = "abort"
-opt-level = 2
+panic = "abort"
 
 [profile.dev]
 panic = "abort"

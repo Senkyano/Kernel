@@ -105,11 +105,15 @@ void terminal_writestring(const char* data)
 	terminal_write(data, strlen(data));
 }
 
-void kernel_main(void) 
-{
-	/* Initialize terminal interface */
-	terminal_initialize();
-
-	/* Newline support is left as an exercise. */
-	terminal_writestring("Hello, kernel World!\n");
+void kernel_main(void) {
+    unsigned short *vga = (unsigned short *)0xB8000;
+    
+    // Initialise tout le buffer
+    for (int i = 0; i < 80 * 25; i++) {
+        vga[i] = 0x0720;
+    }
+    
+    vga[0] = 0x0F4F; // 'O'
+    vga[1] = 0x0F4B; // 'K'
+    while (1) {}
 }

@@ -11,7 +11,7 @@ LINKER = $(ROOT)/linker.ld
 SRCS_ASM     = bootloader/boot.asm
 SRCS_C       = kernelspace_c/kernel.c
 KERNEL_CRATE = $(ROOT)/srcs/kernelspace_rust
-KERNEL_TARGET = i686-kernel
+KERNEL_TARGET = i386-kernel
 KERNEL_LIB   = $(KERNEL_CRATE)/target/$(KERNEL_TARGET)/release/libkernel.a
 
 # ── Colors ────────────────────────────────────────────────────────
@@ -55,8 +55,8 @@ all: $(KERNEL_ELF) iso
 $(KERNEL_LIB):
 	cd $(KERNEL_CRATE) && \
 	RUST_TARGET_PATH=$(KERNEL_CRATE) \
-	RUSTFLAGS="-Z unstable-options" \
-	cargo build --release \
+	RUSTFLAGS="-Z unstable-options -Z ub-checks=no" \
+	cargo +nightly build --release\
 		-Z build-std=core,compiler_builtins \
 		-Z build-std-features=compiler-builtins-mem \
 		--target $(KERNEL_TARGET)
@@ -73,12 +73,7 @@ boot.o: $(SRCS_ASM)
 ifeq ($(LANG),rs)
 $(KERNEL_ELF): boot.o $(KERNEL_LIB)
 	mkdir -p $(OUTDIR_LANG)
-	ld -m elf_i386 \
-	   -T $(LINKER) \
-	   --oformat elf32-i386 \
-	   -o $@ \
-	   boot.o \
-	   $(LINK_EXTRAS)
+	$(CC) $(CFLAGS) -T $(LINKER) -o $@ boot.o -Wl,--whole-archive $(KERNEL_LIB) -Wl,--no-whole-archive
 else
 $(KERNEL_ELF): $(OBJS)
 	mkdir -p $(OUTDIR_LANG)

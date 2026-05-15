@@ -3,7 +3,7 @@ PWD  := $(shell pwd)
 
 .PHONY: all docker build-c build-rs launch-c-simple launch-c launch-rs-simple launch-rs clean fclean
 
-all: docker build-c build-rs
+all: clean build-c build-rs
 
 docker:
 	docker build -t $(NAME) .
@@ -42,10 +42,10 @@ size-c:
 
 # ── Nettoyage ─────────────────────────────────────────────────────
 clean:
+	rm -rf output/ isodir/
 	docker run --rm \
 		-v "$(PWD)/srcs:/kernel/srcs" \
-		-v "$(PWD)/output:/kernel/output" \
-		$(NAME) sh -c "make -C srcs fclean"
+		$(NAME) sh -c "rm -f /kernel/srcs/*.o && cd /kernel/srcs/kernelspace_rust && cargo clean"
 
 fclean: clean
 	docker rmi $(NAME)

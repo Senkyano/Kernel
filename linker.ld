@@ -2,27 +2,40 @@ ENTRY(_start)
 
 SECTIONS
 {
-	. = 2M;
+    /* On commence à 1 MiB */
+    . = 0x00100000;
 
-	.text BLOCK(4K) : ALIGN(4K)
-	{
-		*(.multiboot)
-		*(.text)
-	}
+    /* L'en-tête Multiboot DOIT être au tout début du binaire, aligné sur 4 octets */
+    .multiboot ALIGN(4) :
+    {
+        KEEP(*(.multiboot))
+    }
 
-	.rodata BLOCK(4K) : ALIGN(4K)
-	{
-		*(.rodata)
-	}
+    /* Le code exécutable, aligné sur 16 octets suffit pour le binaire brut */
+    .text ALIGN(16) :
+    {
+        *(.text*)
+    }
 
-	.data BLOCK(4K) : ALIGN(4K)
-	{
-		*(.data)
-	}
+    /* Données en lecture seule */
+    .rodata ALIGN(16) :
+    {
+        *(.rodata*)
+        *(.data.rel.ro*)
+    }
 
-	.bss BLOCK(4K) : ALIGN(4K)
-	{
-		*(COMMON)
-		*(.bss)
-	}
+    /* Données initialisées */
+    .data ALIGN(16) :
+    {
+        *(.data*)
+        *(.got*)
+        *(.got.plt*)
+    }
+
+    /* Données non-initialisées (la pile) */
+    .bss ALIGN(16) :
+    {
+        *(COMMON)
+        *(.bss*)
+    }
 }
