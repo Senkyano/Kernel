@@ -3,7 +3,7 @@ PWD  := $(shell pwd)
 
 .PHONY: all docker build-c build-rs launch-c-simple launch-c launch-rs-simple launch-rs clean fclean
 
-all: clean build-c build-rs
+all: docker build-c build-rs
 
 docker:
 	docker build -t $(NAME) .
@@ -17,8 +17,15 @@ build-c:
 		$(NAME)
 
 build-rs:
+	@echo "1/2 : Nettoyage forcé du cache Cargo (mode déconnecté)..."
+	docker run --rm \
+		-e RUSTUP_TOOLCHAIN=nightly \
+		-v "$(PWD)/srcs:/kernel/srcs" \
+		$(NAME) sh -c "cd /kernel/srcs/kernelspace_rust && cargo clean"
+	@echo "2/2 : Compilation du Kernel Rust..."
 	docker run --rm \
 		-e LANG=rs \
+		-e RUSTUP_TOOLCHAIN=nightly \
 		-v "$(PWD)/srcs:/kernel/srcs" \
 		-v "$(PWD)/output:/kernel/output" \
 		$(NAME)
@@ -42,10 +49,12 @@ size-c:
 
 # ── Nettoyage ─────────────────────────────────────────────────────
 clean:
-	rm -rf output/ isodir/
+	@echo "Nettoyage des dossiers de sortie sur l'hôte..."
+	rm -rf output isodir
+	@echo "Nettoyage du code source et de Cargo via Docker..."
 	docker run --rm \
 		-v "$(PWD)/srcs:/kernel/srcs" \
-		$(NAME) sh -c "rm -f /kernel/srcs/*.o && cd /kernel/srcs/kernelspace_rust && cargo clean"
+		$(NAME) sh -c "make -C srcs clean_source"
 
 fclean: clean
 	docker rmi $(NAME)
