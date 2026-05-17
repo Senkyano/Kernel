@@ -60,14 +60,14 @@ impl ScreenTerminal {
 
 	fn write_char(&mut self, c: u8) {
 		match c {
-			b'\n' => {
+			b'\n' => { // si on rencontre un retour a la ligne
 				self.pos_width = 0;
 				self.pos_height += 1;
 				if self.pos_height >= VGA_HEIGHT {
 					self.scroll();
 				}
 			}
-			_ => {
+			_ => { // Default
 				self.put_entry_at(c, self.color_code, self.pos_width, self.pos_height);
 				self.pos_width += 1;
 				if self.pos_width >= VGA_WIDTH {
