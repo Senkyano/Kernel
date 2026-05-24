@@ -1,11 +1,10 @@
 // kernel.rs
 #![no_std]
 #![no_main]
-#![feature(abi_x86_interrupt)]
 
 mod terminal;
 mod vgacolor;
-// mod interrupts;
+mod interrupts;
 
 #[allow(unused_imports)]
 #[allow(unused)]
@@ -24,15 +23,18 @@ static mut TERM: ScreenTerminal = ScreenTerminal::new(0xB8000, 0x0F);
 
 #[no_mangle]
 pub extern "C" fn kernel_main() -> ! {
+	macro_rules! term {
+    	() => { &mut *(&raw mut TERM) }
+	}
+
 	unsafe { // Le bloc unsafe est pour spécifier que l'on sait ce que l'on fait aux compilateur
-		terminal::CURRENT_CONSOLE = Some(&mut TERM);
-		TERM.clear_screen();
-		// interrupts::init_idt();
-		TERM.set_color(VgaColor::LightGREEN, VgaColor::Black);
-		write!(TERM, "                          42 Kernel | Rihoy & Ythouihar\n");
-		TERM.set_color(VgaColor::White, VgaColor::Black);
-		// core::arch::asm!("sti"); // Instruction de l'activation d'interruption matérielle
-		print!("Ca change tout");
+		term!().clear();
+		term!().set_color(VgaColor::LightGREEN, VgaColor::Black);
+		terminal::CURRENT_CONSOLE = Some(term!());
+		let _ = write!(term!(), "                          42 Kernel | Rihoy & Ythouihar\n");
+		term!().set_color(VgaColor::White, VgaColor::Black);
+		print!("Ca change touta\n");
+		interrupts::init_idt();
 	}
 	loop {}
 }

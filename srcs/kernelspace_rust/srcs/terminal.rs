@@ -14,10 +14,10 @@ struct Buffer {
 
 // Information de ScreenTerminal
 pub struct ScreenTerminal {
-	pos_height : usize,
-	pos_width : usize,
-	color_code : u8,
-	buffer: *mut Buffer,
+	pos_height :	usize,
+	pos_width :		usize,
+	color_code :	u8,
+	buffer:			*mut Buffer,
 }
 
 pub fn make_color(fg: VgaColor, bg: VgaColor) -> u8 {
@@ -116,6 +116,8 @@ impl Console for ScreenTerminal {
 	fn clear(&mut self) {
 		self.clear_screen();
 	}
+
+	// fn changeKeyboard(&mut self, )
 }
 
 // Pour utilisation global et pour utiliser la fonction du terminal actuelle
