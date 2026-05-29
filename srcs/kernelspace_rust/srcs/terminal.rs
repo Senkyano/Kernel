@@ -1,9 +1,10 @@
 
 use crate::vgacolor::VgaColor;
 use core::fmt;
+use crate::interrupts::outb;
 
-const	VGA_HEIGHT: usize = 25;
-const	VGA_WIDTH: usize = 80;
+const	VGA_HEIGHT:	usize = 25;
+const	VGA_WIDTH:	usize = 80;
 
 pub static mut CURRENT_CONSOLE: Option<&'static mut dyn Console> = None;
 
@@ -46,7 +47,7 @@ impl ScreenTerminal {
 	pub fn clear_screen(&mut self) {
 		for height in 0..VGA_HEIGHT {
 			for width in 0..VGA_WIDTH {
-				self.put_entry_at(b' ', self.color_code, width, height);
+				self.put_entry_at(b'\0', self.color_code, width, height);
 			}
 		}
 	}
@@ -79,6 +80,7 @@ impl ScreenTerminal {
 				}
 			}
 		}
+		self.update_cursor();
 	}
 
 	fn scroll(&mut self) {
@@ -97,6 +99,51 @@ impl ScreenTerminal {
 
 	pub fn set_color(&mut self, frontg: VgaColor, backg: VgaColor) {
 		self.color_code = make_color(frontg, backg);
+	}
+
+	fn	mov_pos_left(&mut self) {
+		if self.pos_width > 0 {
+			self.pos_width = self.pos_width - 1;
+		} else {
+			self.pos_width = VGA_WIDTH;
+			if self.pos_height < VGA_HEIGHT {
+				self.pos_height = self.pos_height + 1;
+			}
+		}
+	}
+
+	fn	mov_pos_right(&mut self) {
+		if self.pos_width < VGA_HEIGHT - 1 {
+			self.pos_width = self.pos_width + 1;
+		} else {
+			self.pos_width = 0;
+			if self.pos_height > 0 {
+				self.pos_height = self.pos_height - 1;
+			}
+		}
+	}
+
+	fn	mov_pos_up(&mut self) {
+		if self.pos_height < VGA_HEIGHT - 1 {
+			self.pos_height = self.pos_height + 1;
+		}
+	}
+
+	fn	mov_pos_down(&mut self) {
+		if self.pos_height > 0 {
+			self.pos_height = self.pos_height - 1;
+		}
+	}
+
+	pub fn update_cursor(&self) {
+		let position = (self.pos_height * VGA_WIDTH) + self.pos_width;
+
+		unsafe {
+			outb(0x3D4, 0x0F);
+			outb(0x3D5, (position & 0xFF) as u8);
+			outb(0x3D4, 0x0E);
+			outb(0x3D5, ((position >> 8) & 0xFF) as u8);
+		}
 	}
 }
 

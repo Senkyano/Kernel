@@ -80,7 +80,7 @@ static SCANCODE_MAP_SHIFT: [u8; 58] = [
 ];
 
 // ── Ports I/O ─────────────────────────────────────────────────────
-unsafe fn outb(port: u16, value: u8) {
+pub unsafe fn outb(port: u16, value: u8) {
 	asm!("outb %al, %dx",
 		in("dx") port,
 		in("al") value,
@@ -88,7 +88,7 @@ unsafe fn outb(port: u16, value: u8) {
 	);
 }
 
-unsafe fn inb(port: u16) -> u8 {
+pub unsafe fn inb(port: u16) -> u8 {
 	let value: u8;
 	asm!("inb %dx, %al",
 		in("dx") port,
@@ -226,6 +226,7 @@ unsafe fn do_keyboard() {
 	let key = scancode & 0x7F;
 
 	print!("scancode = 0x{:X}\n", scancode);
+	print!("scancode = 0x{:X}\n", key);
 	match key {
 		0x2A | 0x36 => SHIFT_PRESSED = !released,
 		0x1D		=> CTRL_PRESSED  = !released,

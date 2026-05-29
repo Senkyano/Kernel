@@ -54,10 +54,10 @@ size_t strlen(const char* str)
 #define VGA_HEIGHT  25
 #define VGA_MEMORY  0xB8000 
 
-size_t terminal_row;
-size_t terminal_column;
-uint8_t terminal_color;
-uint16_t* terminal_buffer = (uint16_t*)VGA_MEMORY;
+size_t		terminal_row;
+size_t		terminal_column;
+uint8_t		terminal_color;
+uint16_t*	terminal_buffer = (uint16_t*)VGA_MEMORY;
 
 void terminal_initialize(void) 
 {
