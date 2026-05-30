@@ -197,7 +197,6 @@ unsafe fn do_timer() {
 unsafe fn handle_keypress(scancode: u8) {
 	let idx = scancode as usize;
 
-	print!("usize = {}\n", idx);
 	if idx >= SCANCODE_MAP.len() {
 		return;
 	}
@@ -209,15 +208,22 @@ unsafe fn handle_keypress(scancode: u8) {
 	};
 
 	if ch == 0 {
+		if let Some(ref mut console) = crate::terminal::CURRENT_CONSOLE {
+			if scancode == 0x0E {
+				console.move_cursor_left();
+				console.change_char(b' ');
+			}
+		}
 		return;
 	}
 
-	print!("char = {}\n", ch as char);
+	print!("{}", ch as char);
 }
 
 static mut SHIFT_PRESSED:	bool = false;
 static mut CTRL_PRESSED:	bool = false;
 static mut ALT_PRESSED:		bool = false;
+static mut EXTENDED_KEY:	bool = false;
 
 // IRQ 1 : Clavier
 unsafe fn do_keyboard() {
@@ -225,14 +231,34 @@ unsafe fn do_keyboard() {
 	let released = scancode & 0x80 != 0;
 	let key = scancode & 0x7F;
 
-	print!("scancode = 0x{:X}\n", scancode);
-	print!("scancode = 0x{:X}\n", key);
-	match key {
-		0x2A | 0x36 => SHIFT_PRESSED = !released,
-		0x1D		=> CTRL_PRESSED  = !released,
-		_ => {
-			if !released {
-				handle_keypress(key);
+	if scancode == 0xE0 {
+		EXTENDED_KEY = true;
+		pic_send_eoi(1);
+		return ;
+	}
+	
+	if EXTENDED_KEY {
+		EXTENDED_KEY = false;
+		
+		if !released {
+			if let Some(ref mut console) = crate::terminal::CURRENT_CONSOLE {
+				match key {
+					0x4B => console.move_cursor_left(),
+					0x4D => console.move_cursor_right(),
+					0x48 => console.move_cursor_up(),
+					0x50 => console.move_cursor_down(),
+					_ => { print!("Do other"); }
+				}
+			}
+		}
+	} else {
+		match key {
+			0x2A | 0x36 => SHIFT_PRESSED = !released,
+			0x1D		=> CTRL_PRESSED  = !released,
+			_ => {
+				if !released {
+					handle_keypress(key);
+				}
 			}
 		}
 	}
