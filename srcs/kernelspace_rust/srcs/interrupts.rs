@@ -3,6 +3,7 @@
 use core::arch::asm;
 
 use crate::print;
+use crate::debug_at;
 
 const PIC1_COMMAND: u16 = 0x20;
 const PIC1_DATA:	u16 = 0x21;
@@ -197,6 +198,7 @@ unsafe fn do_timer() {
 unsafe fn handle_keypress(scancode: u8) {
 	let idx = scancode as usize;
 
+	debug_at!(42, 0, "handlekey : {}", idx);
 	if idx >= SCANCODE_MAP.len() {
 		return;
 	}

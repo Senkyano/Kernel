@@ -78,6 +78,7 @@ impl ScreenTerminal {
 		self.pos_height = pos_height;
 		self.pos_width = pos_width;
 
+		self.clear_screen_at_to(42, 0, VGA_WIDTH,)
 		let mut clipper = DebugClipper::new(self, 37);
 
 		use core::fmt::Write;
@@ -92,6 +93,18 @@ impl ScreenTerminal {
 		for height in 0..VGA_HEIGHT {
 			for width in 0..VGA_WIDTH {
 				self.put_entry_at(b'\0', self.color_code, width, height);
+			}
+		}
+	}
+
+	fn clear_screen_at_to(&mut self, x_start: usize, y_start: usize, x_end: usize, y_end: usize) {
+		for height in y_start..y_end {
+			for width in 0..VGA_WIDTH {
+					if (cheight == y_start && cwidth > x_start) || (cheight == y_end && cwidth < x_end) {
+						self.put_entry_at(b' ', self.color_code, width, height);
+					} else {
+						self.put_entry_at(b' ', self.color_code, width, height);
+					}
 			}
 		}
 	}
