@@ -36,7 +36,7 @@ pub extern "C" fn kernel_main() -> ! {
 		// 5 space 29 charactere 2 space 6 caractere = 42 === 37 caracteres
 		"     42 Kernel | Rihoy & Ythouihar  Debug:\n");
 		term!().set_color(VgaColor::White, VgaColor::Black);
-		debug_at!(42, 0, "ok");
+		debug_at!(42, 0, "start");
 		interrupts::init_idt();
 	}
 	loop {}

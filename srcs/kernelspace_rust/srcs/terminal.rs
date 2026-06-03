@@ -78,7 +78,7 @@ impl ScreenTerminal {
 		self.pos_height = pos_height;
 		self.pos_width = pos_width;
 
-		self.clear_screen_at_to(42, 0, VGA_WIDTH,)
+		self.clear_screen_at_to(42, 0, 79, 0);
 		let mut clipper = DebugClipper::new(self, 37);
 
 		use core::fmt::Write;
@@ -87,6 +87,7 @@ impl ScreenTerminal {
 		self.pos_width = saved_width;
 		self.pos_height = saved_heigth;
 		self.update_cursor();
+		// self.reload_screen();
 	}
 
 	pub fn clear_screen(&mut self) {
@@ -97,14 +98,51 @@ impl ScreenTerminal {
 		}
 	}
 
-	fn clear_screen_at_to(&mut self, x_start: usize, y_start: usize, x_end: usize, y_end: usize) {
-		for height in y_start..y_end {
+	fn clear_screen_at_to(&mut self, mut x_start: usize, y_start: usize, x_end: usize, y_end: usize) {
+		let mut vga_width = VGA_WIDTH;
+
+		for height in y_start..=y_end {
+			for width in x_start..vga_width {
+				self.put_entry_at(b'\0', self.color_code, width, height);
+			}
+			if height == y_end {
+				vga_width = x_end;
+			}
+			x_start = 0;
+		}
+	}
+
+	fn get_buffer_chars(&mut self, width: usize, height: usize) -> u8 {
+		if width >= VGA_WIDTH || height >= VGA_HEIGHT {
+			return b' ';
+		}
+
+		unsafe {
+			let entry = (*self.buffer).chars[height][width];
+
+			(entry & 0xFF) as u8
+		}
+	}
+
+	fn get_buffer_color(&mut self, width: usize, height: usize) -> u8 {
+		if width >= VGA_WIDTH || height >= VGA_HEIGHT {
+			return self.color_code;
+		}
+
+		unsafe {
+			let entry = (*self.buffer).chars[height][width];
+
+			((entry >> 8) & 0xFF) as u8
+		}
+	}
+
+	fn reload_screen(&mut self) {
+		for height in 0..VGA_HEIGHT {
 			for width in 0..VGA_WIDTH {
-					if (cheight == y_start && cwidth > x_start) || (cheight == y_end && cwidth < x_end) {
-						self.put_entry_at(b' ', self.color_code, width, height);
-					} else {
-						self.put_entry_at(b' ', self.color_code, width, height);
-					}
+				let mut c = self.get_buffer_chars(width, height);
+				let mut color_code = self.get_buffer_color(width, height);
+
+				self.put_entry_at(c, color_code, width, height);
 			}
 		}
 	}

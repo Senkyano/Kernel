@@ -198,7 +198,6 @@ unsafe fn do_timer() {
 unsafe fn handle_keypress(scancode: u8) {
 	let idx = scancode as usize;
 
-	debug_at!(42, 0, "handlekey : {}", idx);
 	if idx >= SCANCODE_MAP.len() {
 		return;
 	}
@@ -210,6 +209,7 @@ unsafe fn handle_keypress(scancode: u8) {
 	};
 
 	if ch == 0 {
+		debug_at!(42, 0, "scancode: {}", scancode);
 		if let Some(ref mut console) = crate::terminal::CURRENT_CONSOLE {
 			if scancode == 0x0E {
 				console.move_cursor_left();
@@ -241,7 +241,7 @@ unsafe fn do_keyboard() {
 	
 	if EXTENDED_KEY {
 		EXTENDED_KEY = false;
-		
+		debug_at!(42, 0, "extendkey handle : {}", key);
 		if !released {
 			if let Some(ref mut console) = crate::terminal::CURRENT_CONSOLE {
 				match key {
@@ -254,6 +254,7 @@ unsafe fn do_keyboard() {
 			}
 		}
 	} else {
+		debug_at!(42, 0, "handlekey : {}", key);
 		match key {
 			0x2A | 0x36 => SHIFT_PRESSED = !released,
 			0x1D		=> CTRL_PRESSED  = !released,
