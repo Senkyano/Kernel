@@ -2,16 +2,15 @@
 use crate::vgacolor::VgaColor;
 use core::fmt;
 use crate::interrupts::outb;
-use crate::print;
 
-const	VGA_HEIGHT:	usize = 25;
-const	VGA_WIDTH:	usize = 80;
+pub const	VGA_HEIGHT:	usize = 25;
+pub const	VGA_WIDTH:	usize = 80;
 
 pub static mut CURRENT_CONSOLE: Option<&'static mut dyn Console> = None;
 
 #[repr(transparent)]
-struct Buffer {
-	chars: [[u16; VGA_WIDTH]; VGA_HEIGHT],
+pub struct Buffer {
+	pub chars: [[u16; VGA_WIDTH]; VGA_HEIGHT],
 }
 
 // Information de ScreenTerminal
@@ -19,7 +18,7 @@ pub struct ScreenTerminal {
 	pos_height :	usize,
 	pos_width :		usize,
 	color_code :	u8,
-	buffer:			*mut Buffer,
+	pub buffer:		*mut Buffer,
 }
 
 pub fn make_color(fg: VgaColor, bg: VgaColor) -> u8 {
@@ -57,6 +56,8 @@ impl<'a> DebugClipper<'a> {
 	}
 }
 
+pub const VGA_HARDWARE_ADDR: usize = 0xB8000;
+
 // Implémentation de la Class ScreenTerminal
 impl ScreenTerminal {
 	pub const fn new(buffer_addr: usize, choose_color: u8) -> Self {
@@ -66,6 +67,11 @@ impl ScreenTerminal {
 			color_code		: choose_color,
 			buffer			: buffer_addr as *mut Buffer,
 		}
+	}
+
+	pub unsafe fn flush_to_vga(&self) {
+		let vga_hardware_ptr = VGA_HARDWARE_ADDR as  *mut Buffer;
+		core::ptr::copy_nonoverlapping(self.buffer, vga_hardware_ptr, 1);
 	}
 
 	fn	write_debug(&mut self,
@@ -136,16 +142,16 @@ impl ScreenTerminal {
 		}
 	}
 
-	fn reload_screen(&mut self) {
-		for height in 0..VGA_HEIGHT {
-			for width in 0..VGA_WIDTH {
-				let mut c = self.get_buffer_chars(width, height);
-				let mut color_code = self.get_buffer_color(width, height);
+	// fn reload_screen(&mut self) {
+	// 	for height in 0..VGA_HEIGHT {
+	// 		for width in 0..VGA_WIDTH {
+	// 			let mut c = self.get_buffer_chars(width, height);
+	// 			let mut color_code = self.get_buffer_color(width, height);
 
-				self.put_entry_at(c, color_code, width, height);
-			}
-		}
-	}
+	// 			self.put_entry_at(c, color_code, width, height);
+	// 		}
+	// 	}
+	// }
 
 	fn put_entry_at(&mut self, c: u8, color: u8, width: usize, height: usize) {
 		unsafe {
@@ -176,6 +182,7 @@ impl ScreenTerminal {
 			}
 		}
 		self.update_cursor();
+		unsafe {self.flush_to_vga()};
 	}
 
 	fn scroll(&mut self) {
