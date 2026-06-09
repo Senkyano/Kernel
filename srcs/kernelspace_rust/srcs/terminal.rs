@@ -35,6 +35,8 @@ pub trait Console: fmt::Write {
 	fn move_cursor_left(&mut self);
 	fn move_cursor_right(&mut self);
 	fn move_cursor_up(&mut self);
+	fn choose_screen_console(&mut self, new_addr_buffer: *mut Buffer);
+	fn set_other_color(&mut self, frontbg: VgaColor, backbg: VgaColor);
 
 	#[allow(unused)]
 	fn put_char_spe(&mut self, c: u8, at_width: usize, at_height: usize);
@@ -72,6 +74,10 @@ impl ScreenTerminal {
 	pub unsafe fn flush_to_vga(&self) {
 		let vga_hardware_ptr = VGA_HARDWARE_ADDR as  *mut Buffer;
 		core::ptr::copy_nonoverlapping(self.buffer, vga_hardware_ptr, 1);
+	}
+
+	fn	screen_change(&mut self, new_buffer_addr: *mut Buffer) {
+		self.buffer = new_buffer_addr;
 	}
 
 	fn	write_debug(&mut self,
@@ -287,6 +293,11 @@ impl<'a> core::fmt::Write for DebugClipper<'a> {
 impl Console for ScreenTerminal {
 	fn clear(&mut self) { self.clear_screen(); }
 
+	fn choose_screen_console(&mut self, new_addr_buffer: *mut Buffer) {
+		self.screen_change(new_addr_buffer);
+		unsafe {self.flush_to_vga()};
+	}
+
 	fn move_cursor_left(&mut self) {
 		self.mov_cursor_left();
 		self.update_cursor();
@@ -319,6 +330,10 @@ impl Console for ScreenTerminal {
 		self.write_debug(x, y, args);
 	}
 	// fn changeKeyboard(&mut self, )
+
+	fn set_other_color(&mut self, frontbg: VgaColor, backbg: VgaColor) {
+		self.set_color(frontbg, backbg);
+	}
 }
 
 // Pour utilisation global et pour utiliser la fonction du terminal actuelle

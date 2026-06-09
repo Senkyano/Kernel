@@ -4,6 +4,7 @@ use core::arch::asm;
 
 use crate::print;
 use crate::debug_at;
+use crate::vgacolor::VgaColor;
 
 const PIC1_COMMAND: u16 = 0x20;
 const PIC1_DATA:	u16 = 0x21;
@@ -198,6 +199,18 @@ unsafe fn do_timer() {
 unsafe fn handle_keypress(scancode: u8) {
 	let idx = scancode as usize;
 
+	if idx == 59 {
+		if let Some(ref mut console) = crate::terminal::CURRENT_CONSOLE {
+			console.set_other_color(VgaColor::White, VgaColor::Black);
+		}
+		return;
+	} else if idx == 60 {
+		if let Some(ref mut console) = crate::terminal::CURRENT_CONSOLE {
+			console.set_other_color(VgaColor::LightGREEN, VgaColor::Black);
+		}
+		return;
+	}
+
 	if idx >= SCANCODE_MAP.len() {
 		return;
 	}
@@ -207,7 +220,19 @@ unsafe fn handle_keypress(scancode: u8) {
 	} else {
 		SCANCODE_MAP[idx]
 	};
-
+	if CTRL_PRESSED {
+		if idx == 2 {
+			if let Some(ref mut console) = crate::terminal::CURRENT_CONSOLE {
+				console.choose_screen_console(&raw mut crate::PRINCIPAL_SCREEN);
+			}
+		}
+		else if idx == 3 {
+			if let Some(ref mut console) = crate::terminal::CURRENT_CONSOLE {
+				console.choose_screen_console(&raw mut crate::SECONDARY_SCREEN);
+			}
+		}
+		return;
+	}
 	if ch == 0 {
 		debug_at!(42, 0, "scancode: {}", scancode);
 		if let Some(ref mut console) = crate::terminal::CURRENT_CONSOLE {
@@ -218,7 +243,6 @@ unsafe fn handle_keypress(scancode: u8) {
 		}
 		return;
 	}
-
 	print!("{}", ch as char);
 }
 

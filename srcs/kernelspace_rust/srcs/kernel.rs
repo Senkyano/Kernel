@@ -25,6 +25,11 @@ static mut PRINCIPAL_SCREEN: Buffer = Buffer {
 	terminal::VGA_HEIGHT],
 };
 
+static mut SECONDARY_SCREEN: Buffer = Buffer {
+	chars: [[0; terminal::VGA_WIDTH];
+	terminal::VGA_HEIGHT],
+};
+
 static mut TERM: ScreenTerminal = ScreenTerminal::new(0, 0x0F);
 
 #[no_mangle]
@@ -44,8 +49,10 @@ pub extern "C" fn kernel_main() -> ! {
 		"     42 Kernel | Rihoy & Ythouihar  Debug:\n");
 		term!().set_color(VgaColor::White, VgaColor::Black);
 		debug_at!(42, 0, "start");
+		// term!().buffer = &raw mut SECONDARY_SCREEN;
+		// term!().screen_change(&raw mut SECONDARY_SCREEN);
 
-		term!().flush_to_vga();
+		// term!().flush_to_vga();
 		interrupts::init_idt();
 	}
 	loop {}
